@@ -1,0 +1,20 @@
+name: Windows validation and executable
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.9.9'
+      - run: uv python install 3.12
+      - run: uv sync --frozen --python 3.12 --extra dev --extra build
+      - run: uv run --frozen --extra dev --extra build python -m pytest -q
+        env:
+          QT_QPA_PLATFORM: offscreen
+      - run: uv run --frozen --extra dev --extra build python -m PyInstaller --noconfirm --clean --windowed --onefile --name PaperDesk --paths . paperdesk/__main__.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaperDesk-Windows
+          path: dist/PaperDesk.exe
